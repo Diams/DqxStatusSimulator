@@ -3,26 +3,19 @@ import TkEasyGUI as sg
 
 DB_PATH = "dqx_status_sim.db"
 COMBO_KEY = "-DROPDOWN-"
-# 表示するフィールド（順序に対応）
+# 表示するフィールドと表示名（順序）
 STATS_FIELDS = [
-    "hp", "mp", "strength", "resilience", "agility", "deftness",
-    "magical-might", "magical-mending", "charm", "weight"
+    ("hp", "HP"),
+    ("mp", "MP"),
+    ("strength", "ちから"),
+    ("resilience", "みのまもり"),
+    ("agility", "すばやさ"),
+    ("deftness", "きようさ"),
+    ("magical-might", "こうげき魔力"),
+    ("magical-mending", "かいふく魔力"),
+    ("charm", "みりょく"),
+    ("weight", "おもさ"),
 ]
-# フィールド → 表示名マッピング
-DISPLAY_NAMES = {
-    "hp": "HP",
-    "mp": "MP",
-    "strength": "ちから",
-    "resilience": "みのまもり",
-    "agility": "すばやさ",
-    "deftness": "きようさ",
-    "magical-might": "こうげき魔力",
-    "magical-mending": "かいふく魔力",
-    "charm": "みりょく",
-    "weight": "おもさ",
-}
-# キー名マッピング
-FIELD_KEYS = {f: f"-{f.upper()}-" for f in STATS_FIELDS}
 
 
 def load_job_names(db_path=DB_PATH):
@@ -31,66 +24,60 @@ def load_job_names(db_path=DB_PATH):
     cur.execute("SELECT job_name FROM job")
     rows = cur.fetchall()
     conn.close()
-    return [row[0] for row in rows]
+    return [r[0] for r in rows]
 
 
 def load_job_stats(job_name, db_path=DB_PATH):
     conn = sqlite3.connect(db_path)
     cur = conn.cursor()
-    # hp, mp を含めた順序で取得
     cur.execute(
-        """
+        '''
         SELECT hp, mp, strength, resilience, agility, deftness,
                "magical-might", "magical-mending", charm, weight
-        FROM job
-        WHERE job_name = ?
-        """, (job_name,)
+        FROM job WHERE job_name = ?
+        ''', (job_name,)
     )
     row = cur.fetchone()
     conn.close()
-    if not row:
-        return {}
-    return dict(zip(STATS_FIELDS, row))
+    return dict(zip([f[0] for f in STATS_FIELDS], row)) if row else {}
 
 
 def main():
     job_names = load_job_names()
-    # コンボ＋ステータス表示エリアのレイアウト
-    stats_layout = []
-    for field in STATS_FIELDS:
-        display = DISPLAY_NAMES.get(field, field)
-        stats_layout.append([
-            sg.Text(display),
-            sg.Text("", key=FIELD_KEYS[field])
-        ])
+    if not job_names:
+        sg.popup("ジョブがロードされませんでした。DBパスを確認してください.")
+        return
 
+    # コンボとステータス行を作成
     layout = [
-        [
-            sg.Text("選択してください："),
-            sg.Combo(
-                job_names,
-                default_value=job_names[0] if job_names else "",
-                key=COMBO_KEY,
-                enable_events=True
-            )
-        ],
-        *stats_layout,
-        [sg.Button("閉じる")]
+        [sg.Text("ジョブを選択：", size=(12, 1)),
+         sg.Combo(job_names, default_value=job_names[0], key=COMBO_KEY,
+                  size=(20, 1), enable_events=True)]
     ]
+    # 各ステータス行の Text 要素を用意
+    for key, label in STATS_FIELDS:
+        layout.append([
+            sg.Text(label, size=(12, 1)),
+            sg.Text("", size=(10, 1), key=f"-{key.upper()}-")
+        ])
+    layout.append([sg.Button("閉じる")])
 
     window = sg.Window("ステータス表示", layout)
-    while True:
-        event, values = window.read()
-        if event in (sg.WINDOW_CLOSED, "閉じる"):
-            break
 
-        if event == COMBO_KEY:
-            selected = values[COMBO_KEY]
-            stats = load_job_stats(selected)
-            # 全フィールドを更新
-            for field in STATS_FIELDS:
-                key = FIELD_KEYS[field]
-                window[key].update(stats.get(field, ""))
+    # 初期表示値設定
+    stats = load_job_stats(job_names[0])
+    for f, _ in STATS_FIELDS:
+        window[f"-{f.upper()}-"].update(stats.get(f, ""))
+
+    # イベントループ
+    while True:
+        ev, vals = window.read()
+        if ev in (sg.WINDOW_CLOSED, "閉じる"):
+            break
+        if ev == COMBO_KEY:
+            stats = load_job_stats(vals[COMBO_KEY])
+            for f, _ in STATS_FIELDS:
+                window[f"-{f.upper()}-"].update(stats.get(f, ""))
 
     window.close()
 
