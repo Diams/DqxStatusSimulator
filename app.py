@@ -8,6 +8,19 @@ STATS_FIELDS = [
     "hp", "mp", "strength", "resilience", "agility", "deftness",
     "magical-might", "magical-mending", "charm", "weight"
 ]
+# フィールド → 表示名マッピング
+DISPLAY_NAMES = {
+    "hp": "HP",
+    "mp": "MP",
+    "strength": "ちから",
+    "resilience": "みのまもり",
+    "agility": "すばやさ",
+    "deftness": "きようさ",
+    "magical-might": "こうげき魔力",
+    "magical-mending": "かいふく魔力",
+    "charm": "みりょく",
+    "weight": "おもさ",
+}
 # キー名マッピング
 FIELD_KEYS = {f: f"-{f.upper()}-" for f in STATS_FIELDS}
 
@@ -45,8 +58,9 @@ def main():
     # コンボ＋ステータス表示エリアのレイアウト
     stats_layout = []
     for field in STATS_FIELDS:
+        display = DISPLAY_NAMES.get(field, field)
         stats_layout.append([
-            sg.Text(field),
+            sg.Text(display),
             sg.Text("", key=FIELD_KEYS[field])
         ])
 
