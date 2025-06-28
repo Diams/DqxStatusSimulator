@@ -1,50 +1,83 @@
 import sqlite3
 import TkEasyGUI as sg
 
+DB_PATH = "dqx_status_sim.db"
+COMBO_KEY = "-DROPDOWN-"
+STATS_FIELDS = [
+    "strength", "resilience", "agility", "deftness",
+    "magical-might", "magical-mending", "charm", "weight"
+]
+# キー名マッピング
+FIELD_KEYS = {f: f"-{f.upper()}-" for f in STATS_FIELDS}
 
-def load_job_names(db_path="job.db"):
-    """
-    SQLite の job テーブルから job_name をすべて取得してリストで返す
-    """
+
+def load_job_names(db_path=DB_PATH):
     conn = sqlite3.connect(db_path)
     cur = conn.cursor()
     cur.execute("SELECT job_name FROM job")
     rows = cur.fetchall()
     conn.close()
-    # fetchall() の結果は [(name1,), (name2,), …] の形なので、[0] を取り出す
     return [row[0] for row in rows]
 
 
-# 1) データベースから job_name リストを取得
-job_names = load_job_names("dqx_status_sim.db")
+def load_job_stats(job_name, db_path=DB_PATH):
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+    cur.execute(
+        """
+        SELECT strength, resilience, agility, deftness,
+               "magical-might", "magical-mending", charm, weight
+        FROM job
+        WHERE job_name = ?
+        """, (job_name,)
+    )
+    row = cur.fetchone()
+    conn.close()
+    if not row:
+        return {}
+    return dict(zip(STATS_FIELDS, row))
 
-# 2) 取得結果を元にレイアウトを定義
-layout = [
-    [sg.Text("選択してください：")],
-    [sg.Combo(
-        job_names,
-        default_value=job_names[0] if job_names else "",
-        key="-DROPDOWN-",
-        enable_events=True
-    )],
-    [sg.Button("実行"), sg.Button("閉じる")]
-]
 
-# 3) ウィンドウ生成＆イベントループ
-window = sg.Window("プルダウン例", layout)
+def main():
+    job_names = load_job_names()
+    # コンボ＋ステータス表示エリアのレイアウト
+    stats_layout = []
+    for field in STATS_FIELDS:
+        stats_layout.append([
+            sg.Text(field),
+            sg.Text("", key=FIELD_KEYS[field])
+        ])
 
-while True:
-    event, values = window.read()
-    # ウィンドウを閉じる or 「閉じる」ボタン
-    if event in (sg.WINDOW_CLOSED, "閉じる"):
-        break
+    layout = [
+        [
+            sg.Text("選択してください："),
+            sg.Combo(
+                job_names,
+                default_value=job_names[0] if job_names else "",
+                key=COMBO_KEY,
+                enable_events=True
+            )
+        ],
+        *stats_layout,
+        [sg.Button("閉じる")]
+    ]
 
-    # コンボボックスの選択が変わったとき
-    if event == "-DROPDOWN-":
-        print("新しい選択:", values["-DROPDOWN-"])
+    window = sg.Window("ステータス表示", layout)
+    while True:
+        event, values = window.read()
+        if event in (sg.WINDOW_CLOSED, "閉じる"):
+            break
 
-    # 「実行」ボタンが押されたとき
-    if event == "実行":
-        sg.popup(f"現在の選択: {values['-DROPDOWN-']}")
+        if event == COMBO_KEY:
+            selected = values[COMBO_KEY]
+            stats = load_job_stats(selected)
+            # 全フィールドを更新
+            for field in STATS_FIELDS:
+                key = FIELD_KEYS[field]
+                window[key].update(stats.get(field, ""))
 
-window.close()
+    window.close()
+
+
+if __name__ == "__main__":
+    main()
