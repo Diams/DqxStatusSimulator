@@ -80,7 +80,13 @@ def main():
         [sg.Button("閉じる")]
     ]
 
-    window = sg.Window("ステータス表示", layout, resizable=True)
+    # Window を finalize=True で生成し、列を右揃えに設定
+    window = sg.Window("ステータス表示", layout, resizable=True, finalize=True)
+    tree = window[TABLE_KEY].Widget
+    cols = tree["columns"]
+    # 2列目（値）の列名は cols[1]
+    tree.column(cols[1], anchor='e')
+    tree.heading(cols[1], anchor='e')
 
     while True:
         event, values = window.read()
