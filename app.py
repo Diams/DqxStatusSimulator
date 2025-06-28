@@ -46,7 +46,7 @@ def main():
         sg.popup_error("ジョブがロードされませんでした。DBパスを確認してください。")
         return
 
-    # コンボ
+    # コンボ行
     combo_row = [
         sg.Text("ジョブを選択：", size=(12, 1)),
         sg.Combo(
@@ -68,7 +68,7 @@ def main():
         headings=["ステータス", "値"],
         key=TABLE_KEY,
         auto_size_columns=True,
-        justification='left',
+        justification='left',  # 全体左揃えデフォルト
         enable_events=False,
         expand_x=True,
         expand_y=True
@@ -80,13 +80,14 @@ def main():
         [sg.Button("閉じる")]
     ]
 
-    # Window を finalize=True で生成し、列を右揃えに設定
+    # Windowを生成してTreeview設定
     window = sg.Window("ステータス表示", layout, resizable=True, finalize=True)
     tree = window[TABLE_KEY].Widget
     cols = tree["columns"]
-    # 2列目（値）の列名は cols[1]
+    # 値列（2列目）のセルは右揃え
     tree.column(cols[1], anchor='e')
-    tree.heading(cols[1], anchor='e')
+    # 値列のヘッダーは中央揃え
+    tree.heading(cols[1], anchor='center')
 
     while True:
         event, values = window.read()
