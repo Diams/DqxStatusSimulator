@@ -44,8 +44,6 @@ def import_jobs(csv_path: str, db_path: str, table_name: str):
             cols_def.append("job_ID INTEGER PRIMARY KEY")
         elif col == "job_name":
             cols_def.append("job_name TEXT NOT NULL")
-        elif col == "weight":
-            cols_def.append("weight REAL")
         else:
             cols_def.append(f'"{col}" INTEGER')
 
