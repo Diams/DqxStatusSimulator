@@ -50,15 +50,27 @@ def main():
 
     # コンボとステータス行を作成
     layout = [
-        [sg.Text("ジョブを選択：", size=(12, 1)),
-         sg.Combo(job_names, default_value=job_names[0], key=COMBO_KEY,
-                  size=(20, 1), enable_events=True)]
+        [
+            sg.Text("ジョブを選択：", size=(12, 1)),
+            sg.Combo(
+                job_names,
+                default_value=job_names[0],
+                key=COMBO_KEY,
+                size=(20, 1),
+                enable_events=True
+            )
+        ]
     ]
-    # 各ステータス行の Text 要素を用意
+    # 各ステータス行の Text 要素を用意し、区切り線を追加
+    line_width = 12 + 10  # label幅12 + value幅10
     for key, label in STATS_FIELDS:
         layout.append([
             sg.Text(label, size=(12, 1)),
             sg.Text("", size=(10, 1), key=f"-{key.upper()}-")
+        ])
+        # 区切り線
+        layout.append([
+            sg.Text("─" * line_width, size=(line_width, 1))
         ])
     layout.append([sg.Button("閉じる")])
 
