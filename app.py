@@ -3,8 +3,9 @@ import TkEasyGUI as sg
 
 DB_PATH = "dqx_status_sim.db"
 COMBO_KEY = "-DROPDOWN-"
+# 表示するフィールド（順序に対応）
 STATS_FIELDS = [
-    "strength", "resilience", "agility", "deftness",
+    "hp", "mp", "strength", "resilience", "agility", "deftness",
     "magical-might", "magical-mending", "charm", "weight"
 ]
 # キー名マッピング
@@ -23,9 +24,10 @@ def load_job_names(db_path=DB_PATH):
 def load_job_stats(job_name, db_path=DB_PATH):
     conn = sqlite3.connect(db_path)
     cur = conn.cursor()
+    # hp, mp を含めた順序で取得
     cur.execute(
         """
-        SELECT strength, resilience, agility, deftness,
+        SELECT hp, mp, strength, resilience, agility, deftness,
                "magical-might", "magical-mending", charm, weight
         FROM job
         WHERE job_name = ?
